@@ -45,6 +45,35 @@ const OFFICER_RANKS = [
   "Colonel"
 ];
 
+// Clean, high-fidelity inline SVG icons for a professional dashboard aesthetic
+const Icons = {
+  Badge: () => (
+    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+    </svg>
+  ),
+  Arrest: () => (
+    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    </svg>
+  ),
+  Citation: () => (
+    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  ),
+  Incident: () => (
+    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  ),
+  Database: () => (
+    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+    </svg>
+  )
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('arrest'); // arrest, citation, incident, logs
   const [firebaseLoaded, setFirebaseLoaded] = useState(false);
@@ -325,9 +354,12 @@ export default function App() {
         
         {/* Navigation Sidebar */}
         <aside className="w-full md:w-72 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col">
-          <div className="p-5 border-b border-slate-800 bg-slate-950/40">
-            <h1 className="text-base font-bold tracking-wider text-amber-400 uppercase">FHP REGISTRY</h1>
-            <p className="text-[10px] tracking-widest text-slate-400 uppercase font-medium">State Police Records Portal</p>
+          <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center space-x-3">
+            <Icons.Badge />
+            <div>
+              <h1 className="text-base font-bold tracking-wider text-amber-400 uppercase">FHP REGISTRY</h1>
+              <p className="text-[10px] tracking-widest text-slate-400 uppercase font-medium">State Police Records Portal</p>
+            </div>
           </div>
 
           <nav className="p-4 flex-1 space-y-1.5">
@@ -335,34 +367,37 @@ export default function App() {
             
             <button
               onClick={() => setActiveTab('arrest')}
-              className={`w-full text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
                 activeTab === 'arrest' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
+              <Icons.Arrest />
               Arrest Logs
             </button>
 
             <button
               onClick={() => setActiveTab('citation')}
-              className={`w-full text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
                 activeTab === 'citation' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
+              <Icons.Citation />
               Citation Logs
             </button>
 
             <button
               onClick={() => setActiveTab('incident')}
-              className={`w-full text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
                 activeTab === 'incident' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
+              <Icons.Incident />
               Incident Logs
             </button>
 
@@ -372,12 +407,13 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('logs')}
-              className={`w-full text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
                 activeTab === 'logs' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
+              <Icons.Database />
               View Log Registry ({logs.length})
             </button>
           </nav>
@@ -726,7 +762,7 @@ export default function App() {
 
                 {/* Dynamic People's Stories Container */}
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-850 pb-2">
+                  <div className="flex justify-between items-center border-b border-slate-855 pb-2">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">People's Stories</h3>
                     <button 
                       type="button" 
@@ -907,7 +943,7 @@ export default function App() {
                           
                           {/* Person details */}
                           <div className="space-y-2 bg-slate-950/40 p-4 border border-slate-800/60 rounded-xl">
-                            <p className="font-bold text-slate-450 border-b border-slate-800 pb-1.5 text-[11px] uppercase tracking-wider">Subject Profile</p>
+                            <p className="font-bold text-slate-455 border-b border-slate-800 pb-1.5 text-[11px] uppercase tracking-wider">Subject Profile</p>
                             <div>
                               <span className="text-slate-500">Roblox:</span> <span className="text-slate-200">{log.robloxUser}</span>
                             </div>
