@@ -45,34 +45,36 @@ const OFFICER_RANKS = [
   "Colonel"
 ];
 
-// Clean, high-fidelity inline SVG icons for a professional dashboard aesthetic
-const Icons = {
-  Badge: () => (
-    <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-    </svg>
-  ),
-  Arrest: () => (
-    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-  ),
-  Citation: () => (
-    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  ),
-  Incident: () => (
-    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
-  ),
-  Database: () => (
-    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-    </svg>
-  )
-};
+// Standalone clean, high-fidelity SVGs to prevent any property-accessed JSX build errors on Vercel
+const BadgeIcon = () => (
+  <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+  </svg>
+);
+
+const ArrestIcon = () => (
+  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+  </svg>
+);
+
+const CitationIcon = () => (
+  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const IncidentIcon = () => (
+  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
+const DatabaseIcon = () => (
+  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+  </svg>
+);
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('arrest'); // arrest, citation, incident, logs
@@ -113,7 +115,13 @@ export default function App() {
   // Incident Stories (dynamic)
   const [stories, setStories] = useState([{ name: '', text: '' }]);
 
-  const appId = typeof __app_id !== 'undefined' ? __app_id : 'fhp-fsrp-cad';
+  // Ultra-robust global App ID fallback handler
+  let appId = 'fhp-fsrp-cad';
+  try {
+    if (typeof __app_id !== 'undefined' && __app_id) {
+      appId = __app_id;
+    }
+  } catch (e) {}
 
   const triggerToast = (message, isError = false) => {
     setToast({ message, isError });
@@ -333,10 +341,11 @@ export default function App() {
     }
   };
 
-  // Rule 2 local matching
+  // Rule 2 local matching (Hardened against type mismatches in database properties)
   const matchingLogs = logs.filter(log => {
     if (!searchCallsign.trim()) return true;
-    return (log.callsign || '').toLowerCase().includes(searchCallsign.toLowerCase().trim());
+    const callsignStr = String(log.callsign || '');
+    return callsignStr.toLowerCase().includes(searchCallsign.toLowerCase().trim());
   });
 
   return (
@@ -355,7 +364,7 @@ export default function App() {
         {/* Navigation Sidebar */}
         <aside className="w-full md:w-72 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col">
           <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center space-x-3">
-            <Icons.Badge />
+            <BadgeIcon />
             <div>
               <h1 className="text-base font-bold tracking-wider text-amber-400 uppercase">FHP REGISTRY</h1>
               <p className="text-[10px] tracking-widest text-slate-400 uppercase font-medium">State Police Records Portal</p>
@@ -373,7 +382,7 @@ export default function App() {
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
-              <Icons.Arrest />
+              <ArrestIcon />
               Arrest Logs
             </button>
 
@@ -385,7 +394,7 @@ export default function App() {
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
-              <Icons.Citation />
+              <CitationIcon />
               Citation Logs
             </button>
 
@@ -397,7 +406,7 @@ export default function App() {
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
-              <Icons.Incident />
+              <IncidentIcon />
               Incident Logs
             </button>
 
@@ -413,14 +422,14 @@ export default function App() {
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
             >
-              <Icons.Database />
+              <DatabaseIcon />
               View Log Registry ({logs.length})
             </button>
           </nav>
           
           <div className="p-4 bg-slate-950/50 border-t border-slate-800 text-[10px] text-slate-500 space-y-1 font-mono">
             <p>DB-STATE: {firebaseLoaded ? "ONLINE" : "OFFLINE"}</p>
-            <p>SESSION ID: {currentUser ? currentUser.uid.substring(0, 10) : "N/A"}</p>
+            <p>SESSION ID: {currentUser ? String(currentUser.uid || '').substring(0, 10) : "N/A"}</p>
           </div>
         </aside>
 
@@ -439,7 +448,7 @@ export default function App() {
                 
                 {/* Suspect Demographics */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Suspect Demographics</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Suspect Demographics</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-slate-400 font-semibold mb-1.5">Roblox Username</label>
@@ -473,7 +482,7 @@ export default function App() {
                         name="rpName" 
                         required 
                         value={arrestForm.rpName} 
-                        onChange={handleArrestChange} 
+                        onChange={arrestForm.rpName ? handleArrestChange : () => {}} 
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition text-slate-200" 
                       />
                     </div>
@@ -504,7 +513,7 @@ export default function App() {
 
                 {/* Charges */}
                 <div className="space-y-2">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Charges Details</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Charges Details</h3>
                   <label className="block text-xs text-slate-400 font-semibold mb-1.5">Arrest Charges</label>
                   <textarea 
                     name="charges" 
@@ -518,7 +527,7 @@ export default function App() {
 
                 {/* Officer Info */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Submitting Officer Signature</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Submitting Officer Signature</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs text-slate-400 font-semibold mb-1.5">Officer Callsign</label>
@@ -579,7 +588,7 @@ export default function App() {
                 
                 {/* Driver Demographics */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Driver Demographics</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Driver Demographics</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-slate-400 font-semibold mb-1.5">Roblox Username</label>
@@ -629,7 +638,7 @@ export default function App() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-450 font-semibold mb-1.5">Suspect Weight</label>
+                      <label className="block text-xs text-slate-400 font-semibold mb-1.5">Suspect Weight</label>
                       <input 
                         type="text" 
                         name="weight" 
@@ -644,7 +653,7 @@ export default function App() {
 
                 {/* Infractions */}
                 <div className="space-y-2">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Traffic Violation Selection</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Traffic Violation Selection</h3>
                   <label className="block text-xs text-slate-400 font-semibold mb-1.5">Primary Law Broken</label>
                   <select 
                     name="lawBroken" 
@@ -660,7 +669,7 @@ export default function App() {
 
                 {/* Officer Signature */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Writing Officer Signature</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Writing Officer Signature</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs text-slate-400 font-semibold mb-1.5">Officer Callsign</label>
@@ -721,7 +730,7 @@ export default function App() {
                 
                 {/* Subject Demographics */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Subject Demographics</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Subject Demographics</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs text-slate-400 font-semibold mb-1.5">Roblox Username</label>
@@ -762,7 +771,7 @@ export default function App() {
 
                 {/* Dynamic People's Stories Container */}
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-855 pb-2">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">People's Stories</h3>
                     <button 
                       type="button" 
@@ -817,7 +826,7 @@ export default function App() {
 
                 {/* Officer Signature */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-850 pb-1.5">Submitting Officer Signature</h3>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-1.5">Submitting Officer Signature</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs text-slate-400 font-semibold mb-1.5">Officer Callsign</label>
@@ -917,7 +926,7 @@ export default function App() {
                         {/* Registry Header */}
                         <div className="bg-slate-950/60 p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                           <div className="flex items-center space-x-2">
-                            <span className="font-bold text-slate-400 font-mono">#{log.id.substring(0, 8).toUpperCase()}</span>
+                            <span className="font-bold text-slate-400 font-mono">#{String(log.id || '').substring(0, 8).toUpperCase()}</span>
                             <span className="text-slate-500">|</span>
                             <span className={`font-bold uppercase ${isArrest ? 'text-red-400' : isCitation ? 'text-blue-400' : 'text-amber-400'}`}>
                               [{log.logType}]
@@ -943,7 +952,7 @@ export default function App() {
                           
                           {/* Person details */}
                           <div className="space-y-2 bg-slate-950/40 p-4 border border-slate-800/60 rounded-xl">
-                            <p className="font-bold text-slate-455 border-b border-slate-800 pb-1.5 text-[11px] uppercase tracking-wider">Subject Profile</p>
+                            <p className="font-bold text-slate-400 border-b border-slate-800 pb-1.5 text-[11px] uppercase tracking-wider">Subject Profile</p>
                             <div>
                               <span className="text-slate-500">Roblox:</span> <span className="text-slate-200">{log.robloxUser}</span>
                             </div>
