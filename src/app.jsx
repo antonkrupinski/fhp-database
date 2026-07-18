@@ -45,7 +45,7 @@ const OFFICER_RANKS = [
   "Colonel"
 ];
 
-// Standalone clean, high-fidelity SVGs to prevent any property-accessed JSX build errors on Vercel
+// Standalone clean, high-fidelity SVGs to prevent property-accessed rendering errors on build
 const BadgeIcon = () => (
   <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -76,12 +76,40 @@ const DatabaseIcon = () => (
   </svg>
 );
 
+const ClockIcon = () => (
+  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const UsersIcon = () => (
+  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m16-10a4 4 0 11-8 0 4 4 0 018 0zm6 11v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" />
+  </svg>
+);
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState('arrest'); // arrest, citation, incident, logs
+  const [activeTab, setActiveTab] = useState('duty'); // duty, dutyboard, arrest, citation, incident, logs
   const [firebaseLoaded, setFirebaseLoaded] = useState(false);
   const [dbInstance, setDbInstance] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [logs, setLogs] = useState([]);
+
+  // Discord State
+  const [discordUser, setDiscordUser] = useState(null); // { username, avatarUrl, roles: [] }
+  const [showDiscordModal, setShowDiscordModal] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  // Discord Login Form Input Simulation
+  const [discordInputUser, setDiscordInputUser] = useState('');
+  const [discordInputAvatar, setDiscordInputAvatar] = useState('');
+  const [hasVerifiedRole, setHasVerifiedRole] = useState(true); // Default to simulated role presence for convenience
+
+  // Duty State
+  const [onDuty, setOnDuty] = useState(false);
+  const [shiftStartTime, setShiftStartTime] = useState(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [dutyLogs, setDutyLogs] = useState([]); // Synced duty logs for this week
 
   // Search filter
   const [searchCallsign, setSearchCallsign] = useState('');
@@ -128,13 +156,34 @@ export default function App() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Helper: Sunday 00:00:00 Reset Calculation
+  const getStartOfCurrentWeek = () => {
+    const now = new Date();
+    const day = now.getDay(); // 0 is Sunday
+    const diff = now.getDate() - day; // Adjust back to previous Sunday
+    const sunday = new Date(now.setDate(diff));
+    sunday.setHours(0, 0, 0, 0);
+    return sunday.getTime();
+  };
+
+  // Timer effect for On Duty stopwatch
+  useEffect(() => {
+    let interval = null;
+    if (onDuty && shiftStartTime) {
+      interval = setInterval(() => {
+        setElapsedSeconds(Math.floor((Date.now() - shiftStartTime) / 1000));
+      }, 1000);
+    } else {
+      setElapsedSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [onDuty, shiftStartTime]);
+
   // Dynamic initialization of Firebase v10 SDK compat layer 
   useEffect(() => {
     const initFirebase = async () => {
       try {
-        // Load Tailwind first to guarantee instantly styled UI regardless of build environment
         await loadScript("https://cdn.tailwindcss.com");
-        
         await loadScript("https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js");
         await loadScript("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js");
         await loadScript("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js");
@@ -183,10 +232,11 @@ export default function App() {
     initFirebase();
   }, []);
 
-  // Sync real-time logs from Firestore (Strict Path compliant)
+  // Sync real-time logs & duty logs from Firestore (Strict Path compliant)
   useEffect(() => {
     if (!firebaseLoaded || !currentUser || !dbInstance) return;
 
+    // 1. Sync CAD Crime Logs
     const logsCollectionRef = dbInstance
       .collection('artifacts')
       .doc(appId)
@@ -194,23 +244,47 @@ export default function App() {
       .doc('data')
       .collection('logs');
 
-    const unsubscribe = logsCollectionRef.onSnapshot(
+    const unsubscribeLogs = logsCollectionRef.onSnapshot(
       (snapshot) => {
         const fetched = [];
         snapshot.forEach((doc) => {
           fetched.push({ id: doc.id, ...doc.data() });
         });
-        // Sort inside javascript memory (Rule 2)
         fetched.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         setLogs(fetched);
       },
       (error) => {
         console.error(error);
-        triggerToast("Failed to fetch database records.", true);
+        triggerToast("Failed to fetch database crime records.", true);
       }
     );
 
-    return () => unsubscribe();
+    // 2. Sync Shift Duty Records (Weekly auto-reset calculated dynamically by timestamp)
+    const dutyCollectionRef = dbInstance
+      .collection('artifacts')
+      .doc(appId)
+      .collection('public')
+      .doc('data')
+      .collection('duty_sessions');
+
+    const unsubscribeDuty = dutyCollectionRef.onSnapshot(
+      (snapshot) => {
+        const fetchedDuty = [];
+        snapshot.forEach((doc) => {
+          fetchedDuty.push({ id: doc.id, ...doc.data() });
+        });
+        setDutyLogs(fetchedDuty);
+      },
+      (error) => {
+        console.error(error);
+        triggerToast("Failed to fetch database shift records.", true);
+      }
+    );
+
+    return () => {
+      unsubscribeLogs();
+      unsubscribeDuty();
+    };
   }, [firebaseLoaded, currentUser, dbInstance, appId]);
 
   // Handle Form Input changes
@@ -351,35 +425,229 @@ export default function App() {
     return callsignStr.toLowerCase().includes(searchCallsign.toLowerCase().trim());
   });
 
+  // Discord Login Simulator Submit
+  const handleDiscordMockLogin = (e) => {
+    e.preventDefault();
+    if (!discordInputUser.trim()) {
+      triggerToast("Please provide a valid Discord username.", true);
+      return;
+    }
+
+    const rolesList = [];
+    if (hasVerifiedRole) {
+      rolesList.push("1519891015224524871");
+    }
+
+    const mockAvatar = discordInputAvatar.trim() || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(discordInputUser)}`;
+
+    setDiscordUser({
+      username: discordInputUser.trim(),
+      avatarUrl: mockAvatar,
+      roles: rolesList
+    });
+
+    setShowDiscordModal(false);
+    triggerToast(`Authenticated with Discord as ${discordInputUser.trim()}`);
+  };
+
+  const handleDiscordLogout = () => {
+    setDiscordUser(null);
+    setOnDuty(false);
+    setShiftStartTime(null);
+    setShowProfileDropdown(false);
+    triggerToast("Logged out of Discord.");
+  };
+
+  // Shift Control Handlers
+  const handleStartShift = async () => {
+    if (!discordUser) {
+      triggerToast("You must log in with Discord first.", true);
+      return;
+    }
+    if (!discordUser.roles.includes("1519891015224524871")) {
+      triggerToast("You lack the required verified FHP role to start a shift.", true);
+      return;
+    }
+
+    setOnDuty(true);
+    setShiftStartTime(Date.now());
+    triggerToast("Trooper shift actively logged ON DUTY.");
+  };
+
+  const handleStopShift = async () => {
+    if (!onDuty || !shiftStartTime) return;
+
+    const durationSeconds = Math.floor((Date.now() - shiftStartTime) / 1000);
+    setOnDuty(false);
+    setShiftStartTime(null);
+
+    if (durationSeconds < 5) {
+      triggerToast("Shift was too short to be registered onto public database. (Minimum 5 seconds)");
+      return;
+    }
+
+    // Save to Firebase
+    try {
+      const payload = {
+        discordUsername: discordUser.username,
+        avatarUrl: discordUser.avatarUrl,
+        duration: durationSeconds,
+        timestamp: Date.now(),
+        dateString: new Date().toLocaleString()
+      };
+
+      const dutyCollectionRef = dbInstance
+        .collection('artifacts')
+        .doc(appId)
+        .collection('public')
+        .doc('data')
+        .collection('duty_sessions');
+
+      await dutyCollectionRef.add(payload);
+      triggerToast(`Shift completed: ${Math.floor(durationSeconds / 60)} minutes logged to board.`);
+    } catch (err) {
+      console.error(err);
+      triggerToast("Failed to write shift log to database.", true);
+    }
+  };
+
+  // Format Elapsed Time (Stopwatch)
+  const formatStopwatch = (totalSecs) => {
+    const hours = Math.floor(totalSecs / 3600);
+    const minutes = Math.floor((totalSecs % 3600) / 60);
+    const seconds = totalSecs % 60;
+    return [
+      hours.toString().padStart(2, '0'),
+      minutes.toString().padStart(2, '0'),
+      seconds.toString().padStart(2, '0')
+    ].join(':');
+  };
+
+  // Compute Weekly Duty Board Stats (Using Dynamic Client-Side Auto-Reset Strategy)
+  const weeklyStartTimestamp = getStartOfCurrentWeek();
+  const aggregatedWeeklyBoard = {};
+
+  dutyLogs.forEach(session => {
+    if (session.timestamp >= weeklyStartTimestamp) {
+      const userKey = session.discordUsername;
+      if (!aggregatedWeeklyBoard[userKey]) {
+        aggregatedWeeklyBoard[userKey] = {
+          username: session.discordUsername,
+          avatarUrl: session.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(session.discordUsername)}`,
+          totalDuration: 0
+        };
+      }
+      aggregatedWeeklyBoard[userKey].totalDuration += Number(session.duration || 0);
+    }
+  });
+
+  const weeklyBoardList = Object.values(aggregatedWeeklyBoard);
+
+  // Compute logged-in user's weekly dynamic total
+  const myWeeklySeconds = dutyLogs
+    .filter(s => s.discordUsername === discordUser?.username && s.timestamp >= weeklyStartTimestamp)
+    .reduce((acc, curr) => acc + Number(curr.duration || 0), 0);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased text-sm selection:bg-amber-500 selection:text-slate-950">
       
-      {/* Small Banner Toast */}
+      {/* Toast Notification Banner */}
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-5 py-3 border text-xs font-semibold tracking-wide shadow-2xl rounded-xl transition-all duration-300 ${toast.isError ? 'bg-red-950 border-red-500 text-red-200' : 'bg-slate-900 border-amber-400 text-amber-300'}`}>
           {toast.isError ? "ERROR: " : "SYSTEM: "}{toast.message}
         </div>
       )}
 
+      {/* Header containing the Discord Auth control */}
+      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-sm relative z-40">
+        <div className="flex items-center space-x-3">
+          <BadgeIcon />
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-amber-400">Florida Highway Patrol</h2>
+            <p className="text-[10px] text-slate-400 font-medium">FSRP CAD Patrol Terminal</p>
+          </div>
+        </div>
+
+        {/* Discord Auth Widget */}
+        <div className="relative">
+          {discordUser ? (
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                className="flex items-center space-x-2 bg-slate-950 border border-slate-800 hover:border-amber-400 transition px-3.5 py-1.5 rounded-xl outline-none"
+              >
+                <img 
+                  src={discordUser.avatarUrl} 
+                  alt={discordUser.username} 
+                  className="w-6 h-6 rounded-full object-cover" 
+                  onError={(e) => { e.target.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${discordUser.username}` }}
+                />
+                <span className="font-semibold text-xs text-slate-200">{discordUser.username}</span>
+                <span className="text-[10px] text-slate-500">▼</span>
+              </button>
+
+              {/* Logout Dropdown */}
+              {showProfileDropdown && (
+                <div className="absolute right-0 top-11 mt-1 w-44 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-1.5 z-50">
+                  <button 
+                    onClick={handleDiscordLogout}
+                    className="w-full text-left px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-lg transition"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button 
+              onClick={() => setShowDiscordModal(true)}
+              className="bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold px-4 py-2 rounded-xl transition duration-150 flex items-center space-x-2 text-xs active:scale-95 shadow-md"
+            >
+              <span>Login with Discord</span>
+            </button>
+          )}
+        </div>
+      </header>
+
       {/* Main Container */}
       <div className="flex-1 flex flex-col md:flex-row">
         
         {/* Navigation Sidebar */}
         <aside className="w-full md:w-72 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col">
-          <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center space-x-3">
-            <BadgeIcon />
-            <div>
-              <h1 className="text-base font-bold tracking-wider text-amber-400 uppercase">FHP REGISTRY</h1>
-              <p className="text-[10px] tracking-widest text-slate-400 uppercase font-medium">State Police Records Portal</p>
-            </div>
-          </div>
-
           <nav className="p-4 flex-1 space-y-1.5">
+            <p className="px-2 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">TROOPER SHIFT</p>
+            
+            <button
+              onClick={() => setActiveTab('duty')}
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+                activeTab === 'duty' 
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
+                  : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
+              }`}
+            >
+              <ClockIcon />
+              Duty Active Shift
+            </button>
+
+            <button
+              onClick={() => setActiveTab('dutyboard')}
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+                activeTab === 'dutyboard' 
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
+                  : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
+              }`}
+            >
+              <UsersIcon />
+              Duty Board
+            </button>
+
+            <div className="py-1.5 border-t border-slate-800 my-4" />
+
             <p className="px-2 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">RECORDING FORMS</p>
             
             <button
               onClick={() => setActiveTab('arrest')}
-              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-155 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
                 activeTab === 'arrest' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
@@ -436,9 +704,175 @@ export default function App() {
           </div>
         </aside>
 
-        {/* Form and Data display area */}
+        {/* Content Panel */}
         <main className="flex-1 p-6 md:p-8 bg-slate-950">
           
+          {/* DUTY ACTIVE SHIFT TAB */}
+          {activeTab === 'duty' && (
+            <div className="max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-5 bg-slate-950/60 border-b border-slate-800">
+                <h2 className="text-base font-bold text-amber-400 uppercase tracking-wide">TROOPER ACTIVE DUTY SHIFT</h2>
+                <p className="text-xs text-slate-400 mt-1">Start and stop your state patrol duty shifts. Weekly counters reset dynamically every Sunday.</p>
+              </div>
+
+              <div className="p-6 space-y-6">
+                
+                {/* Authorization Guard Gate */}
+                {!discordUser ? (
+                  <div className="bg-slate-950 border border-slate-800 p-8 rounded-xl text-center space-y-4">
+                    <div className="text-3xl">🛡️</div>
+                    <h3 className="font-bold text-amber-400 uppercase tracking-wider text-sm">Discord Authentication Required</h3>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                      To begin an active FHP patrol shift, you must authorize your Discord account in the top-right corner.
+                    </p>
+                    <button 
+                      onClick={() => setShowDiscordModal(true)}
+                      className="bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold px-6 py-2.5 rounded-xl transition text-xs shadow-md"
+                    >
+                      Authenticate Now
+                    </button>
+                  </div>
+                ) : !discordUser.roles.includes("1519891015224524871") ? (
+                  <div className="bg-red-950/20 border border-red-500/20 p-8 rounded-xl text-center space-y-4">
+                    <div className="text-3xl text-red-500">🚫</div>
+                    <h3 className="font-bold text-red-400 uppercase tracking-wider text-sm">Role Verification Failed</h3>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                      You are logged in as <span className="font-bold text-slate-200">{discordUser.username}</span>, but you lack the required Role ID (<span className="font-mono bg-slate-950 px-1 py-0.5 rounded text-[11px] text-red-300">1519891015224524871</span>) to access the active duty terminal.
+                    </p>
+                    <p className="text-[11px] text-amber-500/90 font-semibold italic">
+                      Tip: You can re-login and tick the "Verified Rank Role Presence" simulator checkbox to test.
+                    </p>
+                  </div>
+                ) : (
+                  // Active stopwatch terminal
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Active Status Display Card */}
+                      <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between">
+                        <div>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">TROOPER STATUS</p>
+                          <p className={`text-xl font-bold mt-1 uppercase ${onDuty ? "text-emerald-400" : "text-slate-400"}`}>
+                            {onDuty ? "● ACTIVE ON DUTY" : "○ OFF DUTY"}
+                          </p>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-4">
+                          Logged discord ID: <span className="font-mono text-slate-400">{discordUser.username}</span>
+                        </p>
+                      </div>
+
+                      {/* Week Tally Card */}
+                      <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">WEEKLY PATROL TALLY</p>
+                        <p className="text-2xl font-black text-amber-400 mt-1">
+                          {Math.floor(myWeeklySeconds / 60)} <span className="text-xs font-semibold text-slate-400">minutes accumulated</span>
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-3 font-semibold uppercase">
+                          Sunday-to-Sunday Target: 60 minutes
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stopwatch interface */}
+                    <div className="bg-slate-950 border border-slate-800 p-8 rounded-2xl text-center space-y-4">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">CURRENT SHIFT SESSION TIMER</p>
+                      <div className="text-5xl font-bold font-mono tracking-widest text-slate-100">
+                        {onDuty ? formatStopwatch(elapsedSeconds) : "00:00:00"}
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
+                        <button
+                          disabled={onDuty}
+                          onClick={handleStartShift}
+                          className={`w-full sm:w-44 font-bold px-6 py-3 rounded-xl transition duration-150 ${
+                            onDuty 
+                              ? 'bg-slate-850 text-slate-500 cursor-not-allowed border border-slate-800' 
+                              : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950 active:scale-95 shadow-md shadow-emerald-500/5'
+                          }`}
+                        >
+                          Start Shift
+                        </button>
+                        <button
+                          disabled={!onDuty}
+                          onClick={handleStopShift}
+                          className={`w-full sm:w-44 font-bold px-6 py-3 rounded-xl transition duration-150 ${
+                            !onDuty 
+                              ? 'bg-slate-850 text-slate-500 cursor-not-allowed border border-slate-800' 
+                              : 'bg-red-500 hover:bg-red-600 text-slate-50 active:scale-95 shadow-md shadow-red-500/5'
+                          }`}
+                        >
+                          Stop Shift
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
+
+          {/* SYSTEM DUTY BOARD DATABASE */}
+          {activeTab === 'dutyboard' && (
+            <div className="max-w-4xl space-y-6">
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-sm">
+                <h2 className="text-base font-bold text-amber-400 uppercase tracking-wide">FHP PUBLIC DUTY BOARD</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Active roster tracking week-long shifts completed since last Sunday 00:00:00. Weekly target required to make shift count: <strong className="text-amber-400">60 active minutes</strong>.
+                </p>
+              </div>
+
+              {/* Duty Board Table */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-4 bg-slate-950/60 border-b border-slate-800 grid grid-cols-4 gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="col-span-2">Trooper Discord Identity</div>
+                  <div className="text-center">Total Time This Week</div>
+                  <div className="text-right">Shift Passed</div>
+                </div>
+
+                <div className="divide-y divide-slate-800">
+                  {weeklyBoardList.length === 0 ? (
+                    <div className="p-12 text-center text-xs text-slate-500">
+                      No troopers have logged any shifts during this Sunday session yet.
+                    </div>
+                  ) : (
+                    weeklyBoardList.map((trooper, idx) => {
+                      const totalMin = Math.floor(trooper.totalDuration / 60);
+                      const madeIt = totalMin >= 60;
+
+                      return (
+                        <div key={idx} className="p-4 grid grid-cols-4 gap-2 items-center text-xs hover:bg-slate-950/20 transition">
+                          <div className="col-span-2 flex items-center space-x-3">
+                            <img 
+                              src={trooper.avatarUrl} 
+                              alt={trooper.username} 
+                              className="w-8 h-8 rounded-full object-cover border border-slate-800"
+                              onError={(e) => { e.target.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${trooper.username}` }}
+                            />
+                            <span className="font-bold text-slate-100 text-sm">{trooper.username}</span>
+                          </div>
+                          <div className="text-center font-mono font-bold text-slate-200">
+                            {totalMin} <span className="text-[10px] text-slate-500 font-sans font-normal">min</span>
+                          </div>
+                          <div className="text-right pr-2">
+                            {madeIt ? (
+                              <span className="inline-flex items-center justify-center bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded-lg font-bold">
+                                ✔️ Made It
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center justify-center bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-1 rounded-lg font-bold">
+                                ❌ Incomplete
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ARREST LOG TAB */}
           {activeTab === 'arrest' && (
             <div className="max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
@@ -1003,7 +1437,7 @@ export default function App() {
                                     log.stories.map((story, sIndex) => (
                                       <div key={sIndex} className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
                                         <div className="flex justify-between items-center mb-1 text-[11px]">
-                                          <span className="text-amber-405 font-bold">Story Account from:</span>
+                                          <span className="text-amber-400 font-bold">Story Account from:</span>
                                           <span className="text-slate-200 font-bold">{story.name}</span>
                                         </div>
                                         <p className="text-slate-300 italic whitespace-pre-wrap leading-relaxed">"{story.text}"</p>
@@ -1030,6 +1464,83 @@ export default function App() {
 
         </main>
       </div>
+
+      {/* DISCORD SIMULATED OAUTH POPUP MODAL */}
+      {showDiscordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl overflow-hidden shadow-2xl animate-fade-in">
+            <div className="p-5 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">💬</span>
+                <h3 className="font-bold text-sm text-slate-100 uppercase tracking-wider">Simulated Discord Login</h3>
+              </div>
+              <button 
+                onClick={() => setShowDiscordModal(false)}
+                className="text-slate-400 hover:text-slate-200 text-xs font-bold"
+              >
+                [Cancel]
+              </button>
+            </div>
+
+            <form onSubmit={handleDiscordMockLogin} className="p-6 space-y-4">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Connect your Discord account to begin tracking patrol shifts. Enter your username below to simulate authorization.
+              </p>
+
+              <div>
+                <label className="block text-xs text-slate-300 font-semibold mb-1">Discord Username</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. state_trooper_99"
+                  value={discordInputUser}
+                  onChange={(e) => setDiscordInputUser(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:border-amber-400 outline-none text-slate-100 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-300 font-semibold mb-1">Custom Avatar URL (Optional)</label>
+                <input 
+                  type="url" 
+                  placeholder="Link to profile image"
+                  value={discordInputAvatar}
+                  onChange={(e) => setDiscordInputAvatar(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:border-amber-400 outline-none text-slate-100 text-xs"
+                />
+              </div>
+
+              {/* Role Checker Simulation switch */}
+              <div className="bg-slate-950 p-4 border border-slate-800 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-slate-300 font-semibold cursor-pointer select-none" htmlFor="role-checkbox">
+                    Verified Rank Role Presence
+                  </label>
+                  <input 
+                    type="checkbox"
+                    id="role-checkbox"
+                    checked={hasVerifiedRole}
+                    onChange={(e) => setHasVerifiedRole(e.checked)}
+                    className="w-4 h-4 rounded text-amber-500 bg-slate-900 border-slate-800 focus:ring-amber-500 cursor-pointer"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 leading-normal">
+                  Toggle whether this Discord account holds the authorized Role ID (<span className="font-mono text-slate-400">1519891015224524871</span>) to begin active duties.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  type="submit" 
+                  className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-2.5 rounded-xl transition duration-150 text-xs shadow-md"
+                >
+                  Authorize CAD Access
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );
