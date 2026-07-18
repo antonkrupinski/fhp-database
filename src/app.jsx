@@ -482,7 +482,7 @@ export default function App() {
                         name="rpName" 
                         required 
                         value={arrestForm.rpName} 
-                        onChange={arrestForm.rpName ? handleArrestChange : () => {}} 
+                        onChange={handleArrestChange} 
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition text-slate-200" 
                       />
                     </div>
