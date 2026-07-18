@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// Live script loader for Firebase compat layer
+// Live script loader for Firebase and Tailwind compat layers
 const loadScript = (src) => {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
@@ -132,6 +132,9 @@ export default function App() {
   useEffect(() => {
     const initFirebase = async () => {
       try {
+        // Load Tailwind first to guarantee instantly styled UI regardless of build environment
+        await loadScript("https://cdn.tailwindcss.com");
+        
         await loadScript("https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js");
         await loadScript("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js");
         await loadScript("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js");
@@ -376,7 +379,7 @@ export default function App() {
             
             <button
               onClick={() => setActiveTab('arrest')}
-              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-155 active:scale-[0.98] ${
                 activeTab === 'arrest' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
@@ -388,7 +391,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('citation')}
-              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-155 active:scale-[0.98] ${
                 activeTab === 'citation' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
@@ -400,7 +403,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('incident')}
-              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-155 active:scale-[0.98] ${
                 activeTab === 'incident' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
@@ -416,7 +419,7 @@ export default function App() {
 
             <button
               onClick={() => setActiveTab('logs')}
-              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-150 active:scale-[0.98] ${
+              className={`w-full flex items-center text-left px-4 py-3 rounded-xl font-medium tracking-wide transition duration-155 active:scale-[0.98] ${
                 activeTab === 'logs' 
                   ? 'bg-amber-500 text-slate-950 font-bold shadow-md' 
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
@@ -1000,7 +1003,7 @@ export default function App() {
                                     log.stories.map((story, sIndex) => (
                                       <div key={sIndex} className="p-4 bg-slate-950 border border-slate-800 rounded-xl">
                                         <div className="flex justify-between items-center mb-1 text-[11px]">
-                                          <span className="text-amber-400 font-bold">Story Account from:</span>
+                                          <span className="text-amber-405 font-bold">Story Account from:</span>
                                           <span className="text-slate-200 font-bold">{story.name}</span>
                                         </div>
                                         <p className="text-slate-300 italic whitespace-pre-wrap leading-relaxed">"{story.text}"</p>
